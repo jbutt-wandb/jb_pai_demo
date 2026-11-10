@@ -1,0 +1,25 @@
+[project]
+name = "wb-models-pai"
+version = "0.1.0"
+description = "W&B workshop for physical AI — multi-stage surrogate modeling with runs, sweeps, artifacts, registry, and reports."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "wandb>=0.18",
+    "wandb-workspaces>=0.2",
+    "torch>=2.4",
+    "numpy>=1.26",
+    "scikit-learn>=1.4",
+    "matplotlib>=3.8",
+    "plotly>=5.20",
+    "pyyaml>=6.0",
+    "pandas>=2.2",
+    "ipykernel>=7.3.0",
+    "nbformat>=5.10.4",
+    "timm>=1.0.28",
+    "einops>=0.8.2",
+]
+
+[project.optional-dependencies]
+airfrans = ["airfrans>=0.1"]
+notebooks = ["jupyter>=1.0", "ipykernel>=6.29"]
