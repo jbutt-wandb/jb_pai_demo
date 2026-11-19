@@ -77,11 +77,12 @@ covers it programmatically. The workspaces API is Public Preview.
 
 **References:**
 
-1. `wandb_workspaces` API reference — full `LinePlot`/`Workspace`/`RunsetSettings` parameter lists, including `line_widths`, `line_colors`, `line_marks` — [workspaces reference](https://docs.coreweave.com/products/wandb/ref/wandb_workspaces/workspaces)
-2. Line plot panel — what the UI exposes (smoothing, outliers, legends) and the regex multi-metric builder — [line plots](https://docs.coreweave.com/products/wandb/app/features/panels/line-plot)
-3. `wandb.plot.line_series` and other preset charts logged at train time — [log plots](https://docs.coreweave.com/products/wandb/track/log/plots)
-4. Custom Vega charts — `wandb.plot_table`, authoring specs with full mark control (`strokeWidth` etc.) — [custom charts](https://docs.coreweave.com/products/wandb/app/features/custom-charts)
-5. `define_metric` — custom x-axes for aligning train/val steps — [customize logging axes](https://docs.coreweave.com/products/wandb/track/log/customize-logging-axes)
+1. `wandb_workspaces` reports API reference — the `LinePlot` panel class and its full parameter list, including `line_widths`, `line_colors`, `line_marks`, smoothing — [reports reference](https://docs.coreweave.com/products/wandb/ref/wandb_workspaces/reports)
+2. `wandb_workspaces` workspaces API reference — `Workspace`, `WorkspaceSettings`, `RunsetSettings`/`RunSettings` (run colors, filters, saved views) — [workspaces reference](https://docs.coreweave.com/products/wandb/ref/wandb_workspaces/workspaces)
+3. Line plot panel — what the UI exposes (smoothing, outliers, legends) and the regex multi-metric builder — [line plots](https://docs.coreweave.com/products/wandb/app/features/panels/line-plot)
+4. `wandb.plot.line_series` and other preset charts logged at train time — [log plots](https://docs.coreweave.com/products/wandb/track/log/plots)
+5. Custom Vega charts — `wandb.plot_table`, authoring specs with full mark control (`strokeWidth` etc.) — [custom charts](https://docs.coreweave.com/products/wandb/app/features/custom-charts)
+6. `define_metric` — custom x-axes for aligning train/val steps — [customize logging axes](https://docs.coreweave.com/products/wandb/track/log/customize-logging-axes)
 
 ---
 
@@ -118,8 +119,8 @@ api.create_registry(
 (UI equivalent: Registry app → Create registry. Collections do **not** need pre-creating —
 they're created automatically on first link.)
 
-**Step 2 — point the SDK at CoreWeave AI Object Storage.** wandb uses boto3 under the hood, so
-the standard S3 env vars work:
+**Step 2 — point the SDK at CoreWeave AI Object Storage.** The wandb SDK honours the standard
+AWS S3 environment variables, so aim them at the CoreWeave endpoint:
 
 ```python
 import os
@@ -162,8 +163,9 @@ coll.save()
 ```
 
 **Step 5 — consume it like any artifact.** The download API is identical to a normal artifact;
-bytes come straight from the bucket using the *consumer's own* credentials (W&B never proxies or
-stores them), and `use_artifact` records the lineage edge as usual:
+bytes come straight from the bucket using the *consumer's own* credentials (W&B holds only the
+pointers, so access control stays with your bucket), and `use_artifact` records the lineage edge
+as usual:
 
 ```python
 import os, wandb
@@ -185,8 +187,10 @@ with wandb.init(entity="my-team", project="training") as run:
   fail, set `addressing_style = virtual` in `~/.aws/config`.
 - **Every consumer needs bucket credentials** (humans, CI, Launch jobs) — that's the design.
 - `add_reference` caps objects per prefix (set `max_objects=` explicitly for big prefixes);
-  `checksum=False` speeds up creation but loses per-object change detection.
-- Linking to a Registry **permanently disables the artifact's TTL policy** (unlinking doesn't restore it).
+  `checksum=False` speeds up creation but the prefix isn't iterated at all — individual objects
+  aren't recorded, and a new version is only created if the URI itself changes.
+- Linking to a Registry deactivates the artifact's TTL policy; unlinking doesn't restore it
+  (set a fresh TTL afterwards if the version still needs one).
 - Personal-entity artifacts can't be linked to Registry; **Restricted Viewer** registry role can't
   download or `use_artifact`.
 - Referenced media won't render in the W&B UI unless the bucket's CORS policy allows the app domain.
@@ -201,8 +205,8 @@ reference artifacts = data never moves. They compose — a BYOB team can still l
 
 1. Reference artifacts — tracking files in external S3-compatible storage (CoreWeave AI Object Storage named explicitly), `AWS_S3_ENDPOINT_URL`, credentials, `max_objects`, CORS, bucket versioning — [track external files](https://docs.coreweave.com/products/wandb/artifacts/track-external-files)
 2. Registry overview — registries → collections → linked versions, `create_registry`, collection auto-creation on first link — [Registry](https://docs.coreweave.com/products/registry)
-3. Linking a version into a collection — target paths, team-entity requirement, link = pointer not copy — [link version](https://docs.coreweave.com/guides/registry/link_version)
-4. Downloading/consuming from a registry — path format, roles required — [download & use](https://docs.coreweave.com/guides/registry/download_use_artifact)
+3. Linking a version into a collection — target paths, team-entity requirement, link = pointer not copy — [link version](https://docs.coreweave.com/products/registry/link_version)
+4. Downloading/consuming from a registry — path format, roles required — [download & use](https://docs.coreweave.com/products/registry/download_use_artifact)
 5. Artifact TTL — linking to a registry permanently disables TTL — [TTL policies](https://docs.coreweave.com/products/wandb/artifacts/ttl)
 6. Secure Storage Connector (BYOB) — team-level buckets incl. CoreWeave AI Object Storage; contrast with references — [secure storage connector](https://docs.coreweave.com/products/wandb/platform/hosting/data-security/secure-storage-connector)
 7. CoreWeave Object Storage endpoints — `cwobject.com` vs in-cluster `cwlota.com` (LOTA), virtual-hosted addressing requirement — [configure endpoints](https://docs.coreweave.com/products/storage/object-storage/using-object-storage/configure-endpoints)
@@ -221,10 +225,10 @@ key in its `config` (e.g. `model_state: "s2"`). Then create one **saved view** p
 view is a workspace whose run list is pinned to a filter (here `model_state = "s2"`), so opening
 the view shows only the comparable runs — and every future run that stamps itself `s2` appears
 there automatically, with no manual selection ever again. Each view has its own shareable URL and
-sits in the workspace menu next to your personal workspace. For the runs that already exist from
-before this convention, you can't edit their config, but you can bulk-add a **tag** (select them
-in the runs table → Tag, or via the Public API — including finding them by which dataset artifact
-they consumed) and filter the view on the tag instead. Views can be created by hand in the UI
+sits in the workspace menu next to your personal workspace. Runs that predate the convention can
+be backfilled: the Public API can update a finished run's config, or you can bulk-add a **tag**
+(also doable by selecting runs in the runs table → Tag) — including finding the cohort by which
+dataset artifact the runs consumed — and filter the view on that instead. Views can be created by hand in the UI
 ("Save as a new view") or scripted with the `wandb-workspaces` library if you have many cohorts.
 Two boundaries to know: `group=` is the wrong tool (it aggregates grouped runs into mean curves,
 changing chart semantics), and once a project accumulates on the order of 10,000 runs the
