@@ -23,11 +23,16 @@ source .venv/bin/activate
 uv sync
 ```
 
-Authenticate with W&B (one-time):
+Authenticate with W&B (one-time). You'll need a W&B API key — create one at
+[forge.coreweave.com/settings](https://forge.coreweave.com/settings) under **API keys**; see the
+[API keys docs](https://docs.coreweave.com/products/wandb/platform/hosting/iam/api-keys) for
+details. Then either run:
 
 ```bash
 wandb login
 ```
+
+and paste the key when prompted, or set it in `.env` as `WANDB_API_KEY` (see `.env_example`).
 
 Then open the notebooks in your Jupyter environment of choice.
 
