@@ -83,6 +83,7 @@ covers it programmatically. The workspaces API is Public Preview.
 4. `wandb.plot.line_series` and other preset charts logged at train time — [log plots](https://docs.coreweave.com/products/wandb/track/log/plots)
 5. Custom Vega charts — `wandb.plot_table`, authoring specs with full mark control (`strokeWidth` etc.) — [custom charts](https://docs.coreweave.com/products/wandb/app/features/custom-charts)
 6. `define_metric` — custom x-axes for aligning train/val steps — [customize logging axes](https://docs.coreweave.com/products/wandb/track/log/customize-logging-axes)
+7. [semantic run colours](https://docs.coreweave.com/products/wandb/runs/color-code-runs)
 
 ---
 
